@@ -1,0 +1,133 @@
+
+<!doctype html>
+
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <meta name="theme-color" content="#4F7DC9">
+  <meta charset="UTF-8">
+  <title>How to Write a Codelab</title>
+  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Source+Code+Pro:400|Roboto:400,300,400italic,500,700|Roboto+Mono">
+  <link rel="stylesheet" href="//fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="https://storage.googleapis.com/claat-public/codelab-elements.css">
+  <style>
+    .success {
+      color: #1e8e3e;
+    }
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <google-codelab-analytics gaid="UA-49880327-14" ga4id=""></google-codelab-analytics>
+  <google-codelab codelab-gaid=""
+                  codelab-ga4id=""
+                  id="zoom-workplace-mcp-codelab"
+                  title="How to Write a Codelab"
+                  environment="web"
+                  feedback-link="https://just-zoomit.io">
+    
+      <google-codelab-step label="Overview" duration="1">
+        <p>This codelab will walk you through integrating Zoom workplace data into an MCP server and building an MCP client using the Anthropic Python Model Context Protocol SDK.</p>
+<h2 class="checklist" is-upgraded>What You&#39;ll Learn</h2>
+<ul class="checklist">
+<li>How to implement an MCP server and MCP client</li>
+<li>How to incorporate Zoom Workplace data into your MCP server</li>
+</ul>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="MCP servers" duration="2">
+        <h2 is-upgraded>Project Setup</h2>
+<ul>
+<li><a href="https://github.com/just-zoomit" target="_blank">Github Repo</a></li>
+<li><a href="https://www.youtube.com/user/iamhalsey/playlists" target="_blank">Youtube - Halsey Playlists</a></li>
+</ul>
+<h2 is-upgraded>Defining tools with MCP</h2>
+<h3 is-upgraded>Creating a Zoom Workplace Contextual data reader tool</h3>
+<p>The first tool reads oom Workplace Contextual data by resource and ID.</p>
+<pre><code language="language-javascript" class="language-javascript">@mcp.tool(
+    &#34;read_zoom_resource&#34;,
+    description=&#34;Read a Zoom Workplace item (meeting, chat message, email, or calendar event) by type and ID.&#34;
+)
+
+def read_zoom_resource(
+    resource_type: ResourceType = Field(
+        description=&#34;The Zoom dataset to read from. One of: &#39;meetings&#39;, &#39;team_chat&#39;, &#39;mail&#39;, &#39;calendar&#39;.&#34;
+    ),
+    resource_id: str = Field(
+        description=&#34;The ID of the item to read (e.g., meetingId, messageId, emailId, eventId).&#34;
+    ),
+):
+    &#34;&#34;&#34;
+    Returns the stored dict for the requested Zoom Workplace item.
+    &#34;&#34;&#34;
+    _, item = _ensure_resource(resource_type, resource_id)
+    return item
+</code></pre>
+<h3 is-upgraded>Building a Document Editor Tool</h3>
+<p>The second tool performs simple find-and-replace operations on requested Zoom Workplace item:</p>
+<pre><code language="language-javascript" class="language-javascript">@mcp.tool(
+    name=&#34;edit_document&#34;,
+    description=&#34;Edit a document by replacing a string in the documents content with a new string.&#34;
+)
+
+def edit_zoom_resource(
+    resource_type: ResourceType = Field(
+        description=&#34;The Zoom dataset to write to. One of: &#39;meetings&#39;, &#39;team_chat&#39;, &#39;mail&#39;, &#39;calendar&#39;.&#34;
+    ),
+    resource_id: str = Field(
+        description=&#34;The ID of the item to edit or create (e.g., meetingId, messageId, emailId, eventId).&#34;
+    ),
+    new_content: dict = Field(
+        description=&#34;The replacement content for this item. Entire object is replaced.&#34;
+    ),
+):
+    &#34;&#34;&#34;
+    Replaces the entire item content. For partial updates, add another tool that merges dicts.
+    &#34;&#34;&#34;
+    if resource_type not in zoom_data:
+        raise ValueError(f&#34;Unknown resource_type &#39;{resource_type}&#39;. &#34;
+                         f&#34;Use one of: meetings, team_chat, mail, calendar.&#34;)
+
+    collection = zoom_data[resource_type]
+
+
+    collection[resource_id] = new_content
+    return collection[resource_id]
+</code></pre>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Test with server inspector" duration="0">
+        <p>Run the following command to lauch the Python MCP SDK includes a built-in browser-based inspector that lets you debug and test your server in real-time.</p>
+<pre><code language="language-javascript" class="language-javascript">mcp dev server.py
+</code></pre>
+<p>This starts a development server and gives you a local URL, typically something like http://127.0.0.1:6274. Open this URL in your browser to access the MCP Inspector.</p>
+<h2 is-upgraded>Using the Your Tools</h2>
+<p>Navigate to the Tools section and click &#34;List Tools&#34; to see all available tools from your server. When you select a tool, the right panel shows its details and input fields.</p>
+<p class="image-container"><img alt="alt-text-here" src="img/a887739ce5c1b4c5.png"></p>
+<p>The inspector shows both the success status and the actual returned data, making it easy to verify your tool works correctly.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Conclusion" duration="0">
+        <p>You build MCP server that can access Zoom Workplace contextual data using the PYTHON SDK.</p>
+
+
+      </google-codelab-step>
+    
+  </google-codelab>
+
+  <script src="https://storage.googleapis.com/claat-public/native-shim.js"></script>
+  <script src="https://storage.googleapis.com/claat-public/custom-elements.min.js"></script>
+  <script src="https://storage.googleapis.com/claat-public/prettify.js"></script>
+  <script src="https://storage.googleapis.com/claat-public/codelab-elements.js"></script>
+  <script src="//support.google.com/inapp/api.js"></script>
+
+</body>
+</html>
