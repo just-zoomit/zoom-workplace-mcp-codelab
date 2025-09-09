@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
   <meta name="theme-color" content="#4F7DC9">
   <meta charset="UTF-8">
-  <title>How to Write a Codelab</title>
+  <title>How to get a Zoom Workplace data into MCP server</title>
   <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Source+Code+Pro:400|Roboto:400,300,400italic,500,700|Roboto+Mono">
   <link rel="stylesheet" href="//fonts.googleapis.com/icon?family=Material+Icons">
   <link rel="stylesheet" href="https://storage.googleapis.com/claat-public/codelab-elements.css">
@@ -24,7 +24,7 @@
   <google-codelab codelab-gaid=""
                   codelab-ga4id=""
                   id="zoom-workplace-mcp-codelab"
-                  title="How to Write a Codelab"
+                  title="How to get a Zoom Workplace data into MCP server"
                   environment="web"
                   feedback-link="https://just-zoomit.io">
     
@@ -39,14 +39,18 @@
 
       </google-codelab-step>
     
-      <google-codelab-step label="MCP servers" duration="2">
+      <google-codelab-step label="MCP servers overview" duration="2">
         <h2 is-upgraded>Project Setup</h2>
 <ul>
 <li><a href="https://github.com/just-zoomit" target="_blank">Github Repo</a></li>
 <li><a href="https://www.youtube.com/user/iamhalsey/playlists" target="_blank">Youtube - Halsey Playlists</a></li>
 </ul>
-<h2 is-upgraded>Defining tools with MCP</h2>
-<h3 is-upgraded>Creating a Zoom Workplace Contextual data reader tool</h3>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Defining tools with MCP" duration="0">
+        <h3 is-upgraded>Creating a Zoom Workplace Contextual data reader tool</h3>
 <p>The first tool reads oom Workplace Contextual data by resource and ID.</p>
 <pre><code language="language-javascript" class="language-javascript">@mcp.tool(
     &#34;read_zoom_resource&#34;,
@@ -111,6 +115,105 @@ def edit_zoom_resource(
 <p>Navigate to the Tools section and click &#34;List Tools&#34; to see all available tools from your server. When you select a tool, the right panel shows its details and input fields.</p>
 <p class="image-container"><img alt="alt-text-here" src="img/a887739ce5c1b4c5.png"></p>
 <p>The inspector shows both the success status and the actual returned data, making it easy to verify your tool works correctly.</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Connecting with MCP clients overview" duration="0">
+        <p>Add details on connecting with MCP clients overview</p>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Implementing a client" duration="0">
+        <pre><code language="language-javascript" class="language-javascript">    # TODO: Return a list of tools defined by the MCP server
+    async def list_tools(self) -&gt; list[types.Tool]:
+        result= await self.session().list_tools()
+        return result.tools
+
+    # TODO: Call a particular tool and return the result
+    async def call_tool(
+        self, tool_name: str, tool_input: dict
+    ) -&gt; types.CallToolResult | None:
+        return await self.session().call_tool(tool_name, tool_input)
+
+</code></pre>
+<ol type="1" start="3">
+<li>Testing</li>
+</ol>
+<pre><code language="language-javascript" class="language-javascript"># For testing
+async def main():
+    async with MCPClient(
+        # If using Python without UV, update command to &#39;python&#39; and remove &#34;run&#34; from args.
+        command=&#34;python3&#34;,
+        args=[ &#34;mcp_server.py&#34;],
+    ) as _client:
+        result = await _client.list_tools()
+        print(&#34;Tools:&#34;, result)
+
+</code></pre>
+<h2 is-upgraded>List Tool Definations Start Client</h2>
+<pre><code language="language-javascript" class="language-javascript">python3 mcp_client.py 
+</code></pre>
+<p>You should see the out of the read and edit tools created earlier. Each tool includes a description and input schema as well. This defination will be passed off to Claude.</p>
+<h2 is-upgraded>Call Tool with Claude</h2>
+<pre><code language="language-javascript" class="language-javascript"> python3 main.py      
+</code></pre>
+<p>Ask Claude the following:</p>
+<pre><code language="language-text" class="language-text">What is the agenda for meeting ID &#34;987654321&#34; ?
+
+</code></pre>
+<p>When we run this, Claude will:</p>
+<ul>
+<li>With the request, will be a list of tools</li>
+<li>Claude will decide which tool to use</li>
+<li>Once tool is picked, it will read the meeting details and return a response</li>
+</ul>
+
+
+      </google-codelab-step>
+    
+      <google-codelab-step label="Defining resources" duration="0">
+        <pre><code language="language-javascript" class="language-javascript">@mcp.resource(&#34;res://resources&#34;, mime_type=&#34;application/json&#34;)
+def list_zoom_resources():
+    &#34;&#34;&#34;
+    List all Zoom Workplace resource IDs by type.
+    Returns:
+    {
+      &#34;meetings&#34;: [&#34;123456789&#34;, &#34;987654321&#34;],
+      &#34;team_chat&#34;: [&#34;msg_1001&#34;, &#34;msg_1002&#34;],
+      &#34;mail&#34;: [&#34;email_2001&#34;],
+      &#34;calendar&#34;: [&#34;event_3001&#34;]
+    }
+    &#34;&#34;&#34;
+    return {
+        rtype: sorted(items.keys(), key=str)
+        for rtype, items in zoom_data.items()
+    }
+
+
+
+</code></pre>
+<h2 is-upgraded>SINGLE RESOURCE (GET)</h2>
+<pre><code language="language-javascript" class="language-javascript">@mcp.resource(&#34;res://resources/{resource_type}/{resource_id}&#34;)
+def get_zoom_resource(
+    resource_type: ResourceType,
+    resource_id: str,
+):
+    &#34;&#34;&#34;
+    Get a specific Zoom Workplace item by type and ID.
+    Example paths:
+      res://resources/meetings/987654321
+      res://resources/team_chat/msg_1001
+      res://resources/mail/email_2001
+      res://resources/calendar/event_3001
+    &#34;&#34;&#34;
+    if resource_type not in zoom_data:
+        raise ValueError(f&#34;Unknown resource_type &#39;{resource_type}&#39;. &#34;
+                         f&#34;Use one of: meetings, team_chat, mail, calendar.&#34;)
+    _, item = _ensure_resource(resource_type, resource_id)
+    return item
+</code></pre>
 
 
       </google-codelab-step>
